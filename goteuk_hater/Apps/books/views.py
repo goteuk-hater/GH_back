@@ -8,7 +8,7 @@ from .serializer import BookCategorySerializer, BookSerializer
 from rest_framework import status
 
 @api_view(['GET'])
-def get_list_all(request):
+def CategoryListGetAPI(request):
     if request.method == 'GET':
         rq = BookCategory.objects.all()
         serializer = BookCategorySerializer(rq, many=True)
@@ -16,7 +16,7 @@ def get_list_all(request):
     return Response({'message: You can only "GET" requests'})
 
 @api_view(['GET', 'POST'])
-def post_list(request):
+def BookListCreateAPI(request):
     if request.method == 'GET':
         rq = Book.objects.all()
         if not rq:
