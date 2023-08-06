@@ -10,4 +10,5 @@ class Book(models.Model):
     name = models.CharField(max_length=128)
     written_by = models.CharField(max_length=128)
     publisher = models.CharField(max_length=128)
-    category = models.IntegerField()
+    category = models.ForeignKey("BookCategory", related_name="BookCategory",
+                                 on_delete=models.CASCADE, db_column='category')
