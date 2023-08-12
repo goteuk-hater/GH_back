@@ -4,12 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = "*"
-django-rest-framework = "*"
-bs4 = "*"
-beautifulsoup4 = "*"
-requests = "*"
-django-environ = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
