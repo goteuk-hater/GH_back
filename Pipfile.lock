@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "5747ad12f8742fea0368ab708ae2dea223837ab70b4e51f3abab0e617b9d397f"
+            "sha256": "350c43c5219567f7640d1f831e74e78801450f929d7d1497ed30ccb0342a7890"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -181,6 +181,14 @@
             ],
             "index": "pypi",
             "version": "==2.31.0"
+        },
+        "sejong-univ-auth": {
+            "hashes": [
+                "sha256:47b1b6a22f319c8461a8d9b6cf792a2677e476bcb560fd22923d305a4d356072",
+                "sha256:cd6cac9a4c984492ec2cafd4f1fda102d2020d52e86a63d60363a411c4a8cc5b"
+            ],
+            "index": "pypi",
+            "version": "==0.3.4"
         },
         "soupsieve": {
             "hashes": [
