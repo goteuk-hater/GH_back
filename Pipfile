@@ -10,6 +10,7 @@ bs4 = "*"
 beautifulsoup4 = "*"
 requests = "*"
 django-environ = "*"
+sejong-univ-auth = "*"
 
 [dev-packages]
 
