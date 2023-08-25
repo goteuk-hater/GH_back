@@ -33,7 +33,9 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = [
-    env('SERVER_IP')
+    env('SERVER_IP'),
+    env('SERVER_DOMAIN1'),
+    env('SERVER_DOMAIN2')
 ]
 
 
