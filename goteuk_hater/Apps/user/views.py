@@ -50,26 +50,22 @@ class UserLoginAPI(APIView):
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# try:
-#     user = User.objects.get(id=id)
-#     user.password = encrypted_data
-#     user.save()
-#     return Response({"message": "Password updated successfully."}, status=status.HTTP_200_OK)
-# except User.DoesNotExist:
-#     serializer = UserSerializer(data=request.data)
-#     if serializer.is_valid():
-#         serializer.save()
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-#     else:
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserLoginAuthAPI(APIView):
     # 암호화된 비밀번호를 파라미터로 입력받음. 비밀번호 변경이 되었는지를 확인.
     def post(self, request, format=None):
-        conf = auth(id="", password="", methods=ClassicSession)
+        id_ = request.data.get("id", None)
+        password_ = request.data.get("password", None)
+        try:
+            user = User.objects.get(id=id_)
+            decrypted_data = decrypt_data(password_, user.hash_key)
+        except User.DoesNotExist:
+            return Response(data="false: No User Found", status=status.HTTP_404_NOT_FOUND)
+
+        conf = auth(id=id_, password=decrypted_data, methods=ClassicSession)
         if conf.is_auth is True:
             return Response(conf.body, status=status.HTTP_200_OK) 
-        return Response("인증실패", status=status.HTTP_401_UNAUTHORIZED)
+        return Response("False", status=status.HTTP_401_UNAUTHORIZED)
     # 인증 실패시 아이디와 비밀번호를 우리 데베에 암호화 해서 저장
     
 class UserLoginReserveAPI(APIView):
