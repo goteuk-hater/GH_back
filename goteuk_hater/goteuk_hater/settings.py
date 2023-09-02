@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'Apps.app1.apps.App1Config',
     'Apps.user.apps.UserConfig',
     'Apps.books.apps.BooksConfig',
-    'Apps.login.apps.LoginConfig',
+    # 'Apps.login.apps.LoginConfig',
 ]
 
 MIDDLEWARE = [
