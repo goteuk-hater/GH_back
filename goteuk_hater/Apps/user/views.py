@@ -13,6 +13,9 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from Apps.user.utils.encryption import *
+
+from sejong_univ_auth import auth
+
 # key = generate_key()
 # original_data = "암호화할 데이터"
 # encrypted_data = encrypt_data(original_data, key)
@@ -24,9 +27,13 @@ class UserLoginAPI(APIView):
     # 로그인 화면에서 로그인시 필요.
     def post(self, request, format=None):
         id_ = request.data.get("id", None)
-        password = request.data.get("password", None)
+        password_ = request.data.get("password", None)
+        result = auth(id=id_, password=password_)
+        if result.is_auth == False:
+            return Response(data={"message": "Login failed."}, status=status.HTTP_401_UNAUTHORIZED)
+        
         key = generate_key()
-        encrypted_data = encrypt_data(password, key)
+        encrypted_data = encrypt_data(password_, key)
         # return Response(data={id, password, key, encrypted_data})
         #데이터베이스에 있는지 확인
         try:
