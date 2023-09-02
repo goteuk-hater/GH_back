@@ -23,20 +23,19 @@ MONTHLY_CHECK_TABLE_API_ROOT = "http://classic.sejong.ac.kr/schedulePageList.do?
 class UserLoginAPI(APIView):
     # 로그인 화면에서 로그인시 필요.
     def post(self, request, format=None):
-        id = request.data.get("id", None)
+        id_ = request.data.get("id", None)
         password = request.data.get("password", None)
         key = generate_key()
         encrypted_data = encrypt_data(password, key)
-        print(type(key))
         # return Response(data={id, password, key, encrypted_data})
         #데이터베이스에 있는지 확인
         try:
-            user = User.objects.get(id=id)
+            user = User.objects.get(id=id_)
             user.hash_key = key
             user.save()
-            return Response({"message": "비밀번호 변경 완료"}, encrypted_data, status=status.HTTP_200_OK)
+            return Response(data=encrypted_data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
-            serializer = UserSerializer(data={"id": id, "hash_key": key})
+            serializer = UserSerializer(data={"id": id_, "hash_key": key})
             if serializer.is_valid():
                 serializer.save()
                 return Response(encrypted_data, status=status.HTTP_201_CREATED)
