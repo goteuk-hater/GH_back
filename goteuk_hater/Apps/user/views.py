@@ -29,7 +29,7 @@ class UserLoginAPI(APIView):
         print(type(id_), type(password_))
         conf = auth(id=id_, password=password_, methods=ClassicSession)
         if conf.is_auth is False:
-            return Response(data='false', status=status.HTTP_200_OK)
+            return Response(data='false', status=status.HTTP_401_UNAUTHORIZED)
         # if result.is_auth == False:
         #     return Response(data={"message": "Login failed."}, status=status.HTTP_401_UNAUTHORIZED)
         
