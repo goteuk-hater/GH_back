@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import find_book_img
 
 
 SejongUNV_API_ROOT = "http://classic.sejong.ac.kr/info/MAIN_02_03.do"
@@ -20,16 +21,18 @@ for category in categories:
         title = book.find("span", class_="book_tit").text.strip()
         author = book.find("span", class_="book_wr").text.strip()
         publisher = book.find("span", class_="book_com").text.strip()
+        url = find_book_img.find_url(title, publisher)
 
         book_data = {
             "id": index,
             "title": title,
             "author": author,
             "publisher": publisher,
+            "image_url": url,
             "category": category_index
         }
+        print(book_data)
         
         response = requests.post(post_api_url, json=book_data)  # json으로 변경
-        print(response.content)
         index += 1
     category_index += 1

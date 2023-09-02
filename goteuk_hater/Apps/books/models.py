@@ -10,5 +10,6 @@ class Book(models.Model):
     title = models.CharField(max_length=128)
     author = models.CharField(max_length=128)
     publisher = models.CharField(max_length=128)
+    image_url = models.CharField(max_length=256, null=True)
     category = models.ForeignKey("BookCategory", related_name="BookCategory",
                                  on_delete=models.CASCADE, db_column='category')
