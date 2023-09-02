@@ -3,15 +3,11 @@
 import requests
 from bs4 import BeautifulSoup
 
-def find_url(book_name, author):
+def find_url(ISBN):
     BOOK_ID_API_ROOT = "https://www.aladin.co.kr/search/wsearchresult.aspx?SearchTarget=Book&SearchWord="
     BOOK_IMG_API_ROOT = "https://www.aladin.co.kr/shop/wproduct.aspx?ItemId="
 
-
-    remove_index = author.index('(')
-    parameter = book_name + ',' + author[:remove_index]
-
-    response = requests.get(BOOK_ID_API_ROOT+parameter)
+    response = requests.get(BOOK_ID_API_ROOT+ISBN)
     html = response.text
 
     # books_in_category = category.find_next("ul", class_="book_list").find_all("li")
