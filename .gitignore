@@ -1,4 +1,2 @@
 .env
-*.sqlite3
-migrations/
 db.sqlite3
