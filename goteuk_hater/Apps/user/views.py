@@ -14,8 +14,6 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from Apps.user.utils.encryption import *
 
-from sejong_univ_auth import auth
-
 # key = generate_key()
 # original_data = "암호화할 데이터"
 # encrypted_data = encrypt_data(original_data, key)
@@ -28,9 +26,12 @@ class UserLoginAPI(APIView):
     def post(self, request, format=None):
         id_ = request.data.get("id", None)
         password_ = request.data.get("password", None)
-        result = auth(id=id_, password=password_)
-        if result.is_auth == False:
-            return Response(data={"message": "Login failed."}, status=status.HTTP_401_UNAUTHORIZED)
+        print(type(id_), type(password_))
+        conf = auth(id=id_, password=password_, methods=ClassicSession)
+        if conf.is_auth is False:
+            return Response(data='false', status=status.HTTP_200_OK)
+        # if result.is_auth == False:
+        #     return Response(data={"message": "Login failed."}, status=status.HTTP_401_UNAUTHORIZED)
         
         key = generate_key()
         encrypted_data = encrypt_data(password_, key)
