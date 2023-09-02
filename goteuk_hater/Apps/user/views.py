@@ -27,22 +27,35 @@ class UserLoginAPI(APIView):
         password = request.data.get("password", None)
         key = generate_key()
         encrypted_data = encrypt_data(password, key)
+        print(type(key))
+        # return Response(data={id, password, key, encrypted_data})
         #데이터베이스에 있는지 확인
-        rq = User.objects.filter(id=id)
-        if not rq:
-            #데이터베이스에 저장
-            serializer = UserSerializer(data=request.data)
+        try:
+            user = User.objects.get(id=id)
+            user.hash_key = key
+            user.save()
+            return Response({"message": "비밀번호 변경 완료"}, encrypted_data, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            serializer = UserSerializer(data={"id": id, "hash_key": key})
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            #해당 id 값 변경
-            rq = User.objects.get(id=id)
-            rq.password = encrypted_data
-            rq.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        
-        
+                return Response(encrypted_data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# try:
+#     user = User.objects.get(id=id)
+#     user.password = encrypted_data
+#     user.save()
+#     return Response({"message": "Password updated successfully."}, status=status.HTTP_200_OK)
+# except User.DoesNotExist:
+#     serializer = UserSerializer(data=request.data)
+#     if serializer.is_valid():
+#         serializer.save()
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
+#     else:
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class UserLoginAuthAPI(APIView):
     # 암호화된 비밀번호를 파라미터로 입력받음. 비밀번호 변경이 되었는지를 확인.
     def post(self, request, format=None):

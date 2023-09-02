@@ -3,5 +3,5 @@ from django.db import models
 # Create your models here.
 class User(models.Model):
     id = models.IntegerField(primary_key=True)
-    hash_key = models.CharField(max_length=128)
+    hash_key = models.BinaryField()
     
