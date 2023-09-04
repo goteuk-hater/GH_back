@@ -53,6 +53,7 @@ class UserLoginAPI(APIView):
 
 class UserLoginAuthAPI(APIView):
     # 암호화된 비밀번호를 파라미터로 입력받음. 비밀번호 변경이 되었는지를 확인.
+    # 자동로그인 판별시 필요함. 
     def post(self, request, format=None):
         id_ = request.data.get("id", None)
         password_ = request.data.get("password", None)
@@ -66,7 +67,6 @@ class UserLoginAuthAPI(APIView):
         if conf.is_auth is True:
             return Response(conf.body, status=status.HTTP_200_OK) 
         return Response("False", status=status.HTTP_401_UNAUTHORIZED)
-    # 인증 실패시 아이디와 비밀번호를 우리 데베에 암호화 해서 저장
     
 class UserLoginReserveAPI(APIView):
     def get(self, request, format=None):
@@ -80,8 +80,15 @@ class UserLoginReserveAPI(APIView):
         return Response("로그인 실패", status=status.HTTP_401_UNAUTHORIZED)
 
 class MonthResevationTableAPI(APIView):
-    def get(self, request, fromat=None):
-        payload = {"userId":"", "password":"", "go":""}        
+    def post(self, request, fromat=None):
+        id_ = request.data.get("id", None)
+        password_ = request.data.get("password", None)
+        try:
+            user = User.objects.get(id=id_)
+            decrypted_data = decrypt_data(password_, user.hash_key)
+        except User.DoesNotExist:
+            return Response(data="false: No User Found", status=status.HTTP_404_NOT_FOUND)
+        payload = {"userId":id_, "password":decrypted_data, "go":""}        
         session = requests.Session()
         response = session.post(LOGIN_API_ROOT, data=payload)
 
