@@ -21,7 +21,7 @@ from Apps.user.utils.encryption import *
 LOGIN_API_ROOT = "http://classic.sejong.ac.kr/userLogin.do"
 MONTHLY_CHECK_TABLE_API_ROOT = "http://classic.sejong.ac.kr/schedulePageList.do?menuInfoId=MAIN_02_04"
 USER_RESERVATION_STATUS_API_ROOT = "https://classic.sejong.ac.kr/viewUserAppInfo.do?menuInfoId=MAIN_02_04"
-
+CANCLE_API_ROOT = "https://classic.sejong.ac.kr/cencelSchedule.do?menuInfoId=MAIN_02_04"
 
 class UserLoginAPI(APIView):
     # 로그인 화면에서 로그인시 필요.
@@ -83,6 +83,32 @@ class UserLoginReserveAPI(APIView):
             return Response("로그인 성공", status=status.HTTP_200_OK)
         return Response("로그인 실패", status=status.HTTP_401_UNAUTHORIZED)
 
+class ReservationCancleAPI(APIView):
+    def post(self, request, format=None):
+        id_ = request.data.get("id", None)
+        password_ = request.data.get("password", None)
+        reserve_id = request.data.get("reserve_id", None)
+        try:
+            user = User.objects.get(id=id_)
+            decrypted_data = decrypt_data(password_, user.hash_key)
+        except User.DoesNotExist:
+            return Response(data="false: No User Found", status=status.HTTP_404_NOT_FOUND)
+        
+        payload = {"userId":id_, "password":decrypted_data, "go":""}
+        session = requests.Session()
+        response = session.post(LOGIN_API_ROOT, data=payload)
+
+        if response.history:
+            payload = {"opAppInfoId":reserve_id}
+            print(reserve_id)
+            response = session.post(CANCLE_API_ROOT, data=payload)
+            print(response.history)
+            if response.history:
+                return Response("취소 성공", status=status.HTTP_200_OK)
+            else:
+                return Response("취소 실패", status=status.HTTP_400_BAD_REQUEST)
+        return Response("로그인 실패", status=status.HTTP_401_UNAUTHORIZED)
+
 class UserReserveStatusAPI(APIView):
     def post(self, request, format=None):
         id_ = request.data.get("id", None)
@@ -103,7 +129,6 @@ class UserReserveStatusAPI(APIView):
             
             table = soup.find_all("tbody")
             tr_elements = table[0].select("tr")
-            print(tr_elements)
             if tr_elements[0].select_one("td:nth-child(1)").text.strip() == "검색된 결과가 없습니다.":
                 return Response("예약 내역이 없습니다.", status=status.HTTP_404_NOT_FOUND)
             result = []
@@ -112,11 +137,16 @@ class UserReserveStatusAPI(APIView):
                 time = data.select_one("td:nth-child(3)").text.strip()
                 location = data.select_one("td:nth-child(4)").text.strip()
                 book_name = data.select_one("td:nth-child(5)").text.strip()
+                reserve_id = str(data.select_one("td:nth-child(6)").select("button"))
+                start_index = reserve_id.find("(")
+                end_index = reserve_id.find(")")
+                reserve_id = reserve_id[start_index+2:end_index-1]
                 reserve_data = {
                     "date": date,
                     "time": time,
                     "location": location,
-                    "book_name": book_name
+                    "book_name": book_name,
+                    "reserve_id": reserve_id
                 }
                 result.append(reserve_data)
             return Response(data=result, status=status.HTTP_200_OK)

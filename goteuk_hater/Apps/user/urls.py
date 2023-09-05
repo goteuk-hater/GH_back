@@ -9,4 +9,5 @@ urlpatterns = [
     path('user_info', UserLoginAuthAPI.as_view()),
     path('calender', MonthResevationTableAPI.as_view()),
     path('reserve_status', UserReserveStatusAPI.as_view()),
+    path('cancle', ReservationCancleAPI.as_view()),
 ]
