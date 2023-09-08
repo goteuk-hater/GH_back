@@ -198,16 +198,22 @@ class MonthResevationTableAPI(APIView):
                 if tr_elements[0].select_one("td:nth-child(1)").text.strip() == "검색된 결과가 없습니다.":
                     start += 1
                     continue
+                data_id = tr_elements[0].find("button").get("onclick")
+                start, end = data_id.find("_"), data_id.find(")")
+                data_id = int(data_id[start+2:end-1])
+
                 for tr in tr_elements:
                     time = tr.select_one("td:nth-child(4)").text.strip()
                     available_seats = tr.select_one("td:nth-child(6)").text.strip()
                     total_seats = tr.select_one("td:nth-child(7)").text.strip()
                     data_in_each_time = {
+                        "id": 'SCHU' + str(data_id),
                         "time": time,
                         "available_seats": available_seats,
-                        "total_seats": total_seats
+                        "total_seats": total_seats,
                     }
                     month_data[str(formatted_date)].append(data_in_each_time)
+                    data_id += 1
                 start += 1
             while start2 <= end2:
                 formatted_date = next_month + "-" + str(start2).zfill(2)
@@ -220,16 +226,19 @@ class MonthResevationTableAPI(APIView):
                 
                 table = soup.find_all("tbody")
                 tr_elements = table[0].select("tr")
-                day_data = []
                 if tr_elements[0].select_one("td:nth-child(1)").text.strip() == "검색된 결과가 없습니다.":
                     start2 += 1
                     continue
                 for tr in tr_elements:
-                    date = tr.select_one("td:nth-child(3)").text.strip()
+                    # data_id = tr.select_one("button").get("onclick")
+                    # start, end = data_id.find("("), data_id.find(")")
+                    # data_id = data_id[start+2:end-1]
+
                     time = tr.select_one("td:nth-child(4)").text.strip()
                     available_seats = tr.select_one("td:nth-child(6)").text.strip()
                     total_seats = tr.select_one("td:nth-child(7)").text.strip()
                     data_in_each_time = {
+                        # "id": data_id,
                         "time": time,
                         "available_seats": available_seats,
                         "total_seats": total_seats
