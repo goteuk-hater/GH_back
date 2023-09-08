@@ -182,12 +182,12 @@ class MonthResevationTableAPI(APIView):
             start_date = now.strftime("%Y-%m")
             start, end = int(now.strftime("%d")) + 1, int(now.strftime("31"))
             start2, end2 = int(next_month_start.day), int(now.strftime("%d"))
-            print(start2, end2)
 
-            month_data = []
+            month_data = {}
 
             while start <= end:
                 formatted_date = start_date + "-" + str(start).zfill(2)
+                month_data[str(formatted_date)] = []
                 payload = {"shDate": formatted_date}
                 response = session.post(MONTHLY_CHECK_TABLE_API_ROOT, data=payload)
 
@@ -195,26 +195,24 @@ class MonthResevationTableAPI(APIView):
                 
                 table = soup.find_all("tbody")
                 tr_elements = table[0].select("tr")
-                day_data = []
                 if tr_elements[0].select_one("td:nth-child(1)").text.strip() == "검색된 결과가 없습니다.":
                     start += 1
                     continue
                 for tr in tr_elements:
-                    date = tr.select_one("td:nth-child(3)").text.strip()
                     time = tr.select_one("td:nth-child(4)").text.strip()
                     available_seats = tr.select_one("td:nth-child(6)").text.strip()
                     total_seats = tr.select_one("td:nth-child(7)").text.strip()
                     data_in_each_time = {
-                        "date": date,
                         "time": time,
                         "available_seats": available_seats,
                         "total_seats": total_seats
                     }
-                    day_data.append(data_in_each_time)
-                month_data.append(day_data)
+                    month_data[str(formatted_date)].append(data_in_each_time)
                 start += 1
             while start2 <= end2:
                 formatted_date = next_month + "-" + str(start2).zfill(2)
+                month_data[str(formatted_date)] = []
+
                 payload = {"shDate": formatted_date}
                 response = session.post(MONTHLY_CHECK_TABLE_API_ROOT, data=payload)
 
@@ -232,13 +230,11 @@ class MonthResevationTableAPI(APIView):
                     available_seats = tr.select_one("td:nth-child(6)").text.strip()
                     total_seats = tr.select_one("td:nth-child(7)").text.strip()
                     data_in_each_time = {
-                        "date": date,
                         "time": time,
                         "available_seats": available_seats,
                         "total_seats": total_seats
                     }
-                    day_data.append(data_in_each_time)
-                month_data.append(day_data)
+                    month_data[str(formatted_date)].append(data_in_each_time)
                 start2 += 1
 
             return Response(month_data, status=status.HTTP_200_OK)
