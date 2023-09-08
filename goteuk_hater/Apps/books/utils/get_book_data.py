@@ -1,42 +1,48 @@
 import requests
 from bs4 import BeautifulSoup
-import find_book_img
-import find_book_isbn
+from .find_book_img import find_url
+from  .find_book_isbn import find_ISBN
+from ..models import Book
+import requests
 
+BOOK_LIST_API_ROOT = "https://classic.sejong.ac.kr/seletTermBookList.json"
 
-SejongUNV_API_ROOT = "http://classic.sejong.ac.kr/info/MAIN_02_03.do"
-response = requests.get(SejongUNV_API_ROOT)
-html = response.text
+def create_books():
 
-soup = BeautifulSoup(html, "html.parser") 
+    SejongUNV_API_ROOT = "http://classic.sejong.ac.kr/info/MAIN_02_03.do"
+    response = requests.get(SejongUNV_API_ROOT)
+    html = response.text
 
-categories = soup.find_all("h4", class_="tit")
-post_api_url = "http://127.0.0.1:8000/books/book_data"
+    soup = BeautifulSoup(html, "html.parser") 
 
-category_index = 1
-index = 1
-for category in categories:
-    books_in_category = category.find_next("ul", class_="book_list").find_all("li")
+    categories = soup.find_all("h4", class_="tit")
 
-    for i, book in enumerate(books_in_category):
-        ISBN_API_ROOT = book.find("a").get('href')
-        ISBN = find_book_isbn.find_ISBN(ISBN_API_ROOT)
-        ISBN = ISBN.split()
-        title = book.find("span", class_="book_tit").text.strip()
-        author = book.find("span", class_="book_wr").text.strip()
-        publisher = book.find("span", class_="book_com").text.strip()
-        url = find_book_img.find_url(ISBN[0])
+    cid = [1000, 2000, 3000, 4000]
+    index = 0
+    for category in categories:
+        books_in_category = category.find_next("ul", class_="book_list").find_all("li")
+        form_data = {"opTermId": "TERM-00568", "bkAreaCode" : cid[index]}
+        response = requests.post(BOOK_LIST_API_ROOT, data=form_data).json()
 
-        book_data = {
-            "id": index,
-            "title": title,
-            "author": author,
-            "publisher": publisher,
-            "image_url": url,
-            "category": category_index
-        }
-        print(book_data)
-        
-        response = requests.post(post_api_url, json=book_data)  # json으로 변경
+        for book, data in zip(books_in_category, response['results']):
+            ISBN_API_ROOT = book.find("a").get('href')
+            ISBN = find_ISBN(ISBN_API_ROOT)
+            ISBN = ISBN.split()
+            title = book.find("span", class_="book_tit").text.strip()
+            author = book.find("span", class_="book_wr").text.strip()
+            publisher = book.find("span", class_="book_com").text.strip()
+            url = find_url(ISBN[0])
+
+            print(data['bkName'], data['bkCode'])
+            book_data = {
+                "id": data['bkCode'],
+                "title": title,
+                "author": author,
+                "publisher": publisher,
+                "image_url": url,
+                "category_id": cid[index],
+            }
+            
+            Book.objects.create(**book_data)
+            
         index += 1
-    category_index += 1

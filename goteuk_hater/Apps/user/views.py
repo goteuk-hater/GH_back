@@ -24,6 +24,9 @@ LOGIN_API_ROOT = "http://classic.sejong.ac.kr/userLogin.do"
 MONTHLY_CHECK_TABLE_API_ROOT = "http://classic.sejong.ac.kr/schedulePageList.do?menuInfoId=MAIN_02_04"
 USER_RESERVATION_STATUS_API_ROOT = "https://classic.sejong.ac.kr/viewUserAppInfo.do?menuInfoId=MAIN_02_04"
 CANCLE_API_ROOT = "https://classic.sejong.ac.kr/cencelSchedule.do?menuInfoId=MAIN_02_04"
+RESERVE_API_ROOT = "https://classic.sejong.ac.kr/addAppInfo.do?menuInfoId=MAIN_02_04"
+SELECT_BOOT_TERMLIST_API_ROOT = "https://classic.sejong.ac.kr/seletTermBookList.json"
+
 
 class UserLoginAPI(APIView):
     # 로그인 화면에서 로그인시 필요.
@@ -75,15 +78,18 @@ class UserLoginAuthAPI(APIView):
         return Response("False", status=status.HTTP_401_UNAUTHORIZED)
     
 class UserLoginReserveAPI(APIView):
-    def get(self, request, format=None):
-        payload = {"userId":"", "password":"", "go":""}
-
+    def post(self, request, format=None):
+        id_ = request.data.get("id", None)
+        password_ = request.data.get("password", None)
+        try:
+            user = User.objects.get(id=id_)
+            decrypted_data = decrypt_data(password_, user.hash_key)
+        except User.DoesNotExist:
+            return Response(data="false: No User Found", status=status.HTTP_404_NOT_FOUND)
+        
+        payload = {"userId":id_, "password":decrypted_data, "go":""}
         session = requests.Session()
         response = session.post(LOGIN_API_ROOT, data=payload)
-     
-        if response.history:
-            return Response("로그인 성공", status=status.HTTP_200_OK)
-        return Response("로그인 실패", status=status.HTTP_401_UNAUTHORIZED)
 
 class ReservationCancleAPI(APIView):
     def post(self, request, format=None):
@@ -299,9 +305,3 @@ class UserUpdateDestroyAPI(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         rq.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-# class UserLoginAPI(APIView):
-#     def get(self, request, format=None):
-#         conf = auth(id="18011489", password="hip@3326405", methods=ClassicSession)
-#         if conf.is_auth is True:
-#             return Response(conf, status=status.HTTP_200_OK)

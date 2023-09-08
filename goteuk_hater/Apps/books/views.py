@@ -9,6 +9,9 @@ from .models import BookCategory, Book
 from .serializer import BookCategorySerializer, BookSerializer
 from rest_framework import status
 
+import requests
+
+
 class CategoryListGetAPI(APIView):
     def get(self, request, format=None):
         rq = BookCategory.objects.all()
@@ -38,5 +41,3 @@ class BookListCreateAPI(APIView):
             return Response({'detail': 'All categories deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
         else:
             return Response({'detail': 'No categories to delete'}, status=status.HTTP_404_NOT_FOUND)
-
-
