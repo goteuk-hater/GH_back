@@ -28,7 +28,7 @@ def create_books():
             ISBN_API_ROOT = book.find("a").get('href')
             ISBN = find_ISBN(ISBN_API_ROOT)
             ISBN = ISBN.split()
-            title = book.find("span", class_="book_tit").text.strip()
+            title = data['bkName']
             author = book.find("span", class_="book_wr").text.strip()
             publisher = book.find("span", class_="book_com").text.strip()
             url = find_url(ISBN[0])

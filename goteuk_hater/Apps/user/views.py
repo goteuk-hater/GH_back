@@ -34,7 +34,6 @@ class UserLoginAPI(APIView):
     def post(self, request, format=None):
         id_ = request.data.get("id", None)
         password_ = request.data.get("password", None)
-        print(type(id_), type(password_))
         conf = auth(id=id_, password=password_, methods=ClassicSession)
         if conf.is_auth is False:
             return Response(data='false', status=status.HTTP_401_UNAUTHORIZED)
