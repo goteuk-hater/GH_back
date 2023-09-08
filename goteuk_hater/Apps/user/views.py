@@ -14,6 +14,8 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from Apps.user.utils.encryption import *
 
+from ..books.models import Book
+
 # key = generate_key()
 # original_data = "암호화할 데이터"
 # encrypted_data = encrypt_data(original_data, key)
@@ -141,11 +143,14 @@ class UserReserveStatusAPI(APIView):
                 start_index = reserve_id.find("(")
                 end_index = reserve_id.find(")")
                 reserve_id = reserve_id[start_index+2:end_index-1]
+                classification = Book.objects.get(title=book_name).category.category
+
                 reserve_data = {
                     "date": date,
                     "time": time,
                     "location": location,
                     "book_name": book_name,
+                    "classification": classification,
                     "reserve_id": reserve_id
                 }
                 result.append(reserve_data)
