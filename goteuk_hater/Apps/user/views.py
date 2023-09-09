@@ -25,7 +25,10 @@ RESERVE_API_ROOT = "https://classic.sejong.ac.kr/addAppInfo.do?menuInfoId=MAIN_0
 SELECT_BOOT_TERMLIST_API_ROOT = "https://classic.sejong.ac.kr/seletTermBookList.json"
 RESERVE_CHECK_API_ROOT = "https://classic.sejong.ac.kr/addUserSchedule.do?menuInfoId=MAIN_02"
 
-
+# "서양의역사와사상(4권)":"5 권",
+# "동양의역사와사상(2권)":"4 권",
+# "동·서양의 문학(3권)":"1 권",
+# "과학 사상(1권)":"0 권"
 class UserLoginAPI(APIView):
     # 로그인 화면에서 로그인시 필요.
     # 완료
@@ -46,6 +49,12 @@ class UserLoginAPI(APIView):
         except User.DoesNotExist:
             data={"id": id_, "hash_key": key}
             User.objects.create(**data)
+
+        info_data = conf.body
+        for key in info_data['read_certification']:
+            int_value, string_value = info_data['read_certification'][key].split(' ')
+            info_data['read_certification'][key] = int(int_value)
+
         res_data = {
             "id": id_,
             "password": encrypted_data,
@@ -69,8 +78,12 @@ class UserLoginAuthAPI(APIView):
             return Response(data="false: No User Found", status=status.HTTP_404_NOT_FOUND)
 
         conf = auth(id=id_, password=decrypted_data, methods=ClassicSession)
+        info_data = conf.body
+        for key in info_data['read_certification']:
+            int_value, string_value = info_data['read_certification'][key].split(' ')
+            info_data['read_certification'][key] = int(int_value)
         if conf.is_auth is True:
-            return Response(conf.body, status=status.HTTP_200_OK) 
+            return Response(info_data, status=status.HTTP_200_OK) 
         return Response("False", status=status.HTTP_401_UNAUTHORIZED)
 
 class ReservationAPI(APIView):

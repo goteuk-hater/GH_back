@@ -12,6 +12,7 @@ requests = "*"
 django-environ = "*"
 sejong-univ-auth = "*"
 cryptography = "*"
+aiohttp = "*"
 
 [dev-packages]
 
