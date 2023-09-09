@@ -14,11 +14,8 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from Apps.user.utils.encryption import *
 
-from ..books.models import Book
-
-# key = generate_key()
-# original_data = "암호화할 데이터"
-# encrypted_data = encrypt_data(original_data, key)
+from ..user.models import User
+from ..books.models import Book, BookCategory
 
 LOGIN_API_ROOT = "http://classic.sejong.ac.kr/userLogin.do"
 MONTHLY_CHECK_TABLE_API_ROOT = "http://classic.sejong.ac.kr/schedulePageList.do?menuInfoId=MAIN_02_04"
@@ -26,6 +23,7 @@ USER_RESERVATION_STATUS_API_ROOT = "https://classic.sejong.ac.kr/viewUserAppInfo
 CANCLE_API_ROOT = "https://classic.sejong.ac.kr/cencelSchedule.do?menuInfoId=MAIN_02_04"
 RESERVE_API_ROOT = "https://classic.sejong.ac.kr/addAppInfo.do?menuInfoId=MAIN_02_04"
 SELECT_BOOT_TERMLIST_API_ROOT = "https://classic.sejong.ac.kr/seletTermBookList.json"
+RESERVE_CHECK_API_ROOT = "https://classic.sejong.ac.kr/addUserSchedule.do?menuInfoId=MAIN_02"
 
 
 class UserLoginAPI(APIView):
@@ -37,25 +35,19 @@ class UserLoginAPI(APIView):
         conf = auth(id=id_, password=password_, methods=ClassicSession)
         if conf.is_auth is False:
             return Response(data='false', status=status.HTTP_401_UNAUTHORIZED)
-        # if result.is_auth == False:
-        #     return Response(data={"message": "Login failed."}, status=status.HTTP_401_UNAUTHORIZED)
         
         key = generate_key()
         encrypted_data = encrypt_data(password_, key)
-        # return Response(data={id, password, key, encrypted_data})
-        #데이터베이스에 있는지 확인
         try:
             user = User.objects.get(id=id_)
             user.hash_key = key
             user.save()
             return Response(data=encrypted_data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
-            serializer = UserSerializer(data={"id": id_, "hash_key": key})
-            if serializer.is_valid():
-                serializer.save()
-                return Response(encrypted_data, status=status.HTTP_201_CREATED)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            data={"id": id_, "hash_key": key}
+            User.objects.create(**data)
+            return Response(data=encrypted_data, status=status.HTTP_200_OK)
+            
 
 
 class UserLoginAuthAPI(APIView):
@@ -75,8 +67,9 @@ class UserLoginAuthAPI(APIView):
         if conf.is_auth is True:
             return Response(conf.body, status=status.HTTP_200_OK) 
         return Response("False", status=status.HTTP_401_UNAUTHORIZED)
-    
-class UserLoginReserveAPI(APIView):
+
+class ReservationAPI(APIView):
+    # 예약 API
     def post(self, request, format=None):
         id_ = request.data.get("id", None)
         password_ = request.data.get("password", None)
@@ -90,7 +83,29 @@ class UserLoginReserveAPI(APIView):
         session = requests.Session()
         response = session.post(LOGIN_API_ROOT, data=payload)
 
+        if response.history:
+            shInfold = request.data.get("shInfold", None)
+            response = session.get(RESERVE_CHECK_API_ROOT + "&shInfoId=" + shInfold)
+            if response.history:
+                return Response("false", status=status.HTTP_400_BAD_REQUEST)
+            book_name = request.data.get("book_name", None)
+            classification = request.data.get("classification", None)
+            opTermId = 'TERM-00568'
+            bkCode = Book.objects.get(title=book_name).id
+            bkAreaCode = BookCategory.objects.get(category=classification).id
+
+            data = {'shInfoId': shInfold, 
+                    'opTermId': opTermId, 
+                    'bkCode': bkCode,
+                    'bkAreaCode': bkAreaCode}
+            response = session.post(RESERVE_API_ROOT, data=data)
+
+            return Response("예약 성공", status=status.HTTP_200_OK)
+        else:
+            return Response("로그인 실패", status=status.HTTP_401_UNAUTHORIZED)
+
 class ReservationCancleAPI(APIView):
+    #예약 취소 
     def post(self, request, format=None):
         id_ = request.data.get("id", None)
         password_ = request.data.get("password", None)
@@ -107,9 +122,7 @@ class ReservationCancleAPI(APIView):
 
         if response.history:
             payload = {"opAppInfoId":reserve_id}
-            print(reserve_id)
             response = session.post(CANCLE_API_ROOT, data=payload)
-            print(response.history)
             if response.history:
                 return Response("취소 성공", status=status.HTTP_200_OK)
             else:
@@ -117,6 +130,7 @@ class ReservationCancleAPI(APIView):
         return Response("로그인 실패", status=status.HTTP_401_UNAUTHORIZED)
 
 class UserReserveStatusAPI(APIView):
+    #예약 현황
     def post(self, request, format=None):
         id_ = request.data.get("id", None)
         password_ = request.data.get("password", None)
@@ -164,7 +178,7 @@ class UserReserveStatusAPI(APIView):
         return Response("로그인 실패", status=status.HTTP_401_UNAUTHORIZED)
 
 class MonthResevationTableAPI(APIView):
-    # 완료
+    # 월별 빈자리 현황
     def post(self, request, fromat=None):
         id_ = request.data.get("id", None)
         password_ = request.data.get("password", None)

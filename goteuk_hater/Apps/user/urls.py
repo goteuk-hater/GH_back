@@ -10,4 +10,5 @@ urlpatterns = [
     path('calender', MonthResevationTableAPI.as_view()),
     path('reserve_status', UserReserveStatusAPI.as_view()),
     path('cancle', ReservationCancleAPI.as_view()),
+    path('reserve', ReservationAPI.as_view()),
 ]
