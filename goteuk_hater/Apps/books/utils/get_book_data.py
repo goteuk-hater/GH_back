@@ -33,7 +33,6 @@ def create_books():
             publisher = book.find("span", class_="book_com").text.strip()
             url = find_url(ISBN[0])
 
-            print(data['bkName'], data['bkCode'])
             book_data = {
                 "id": data['bkCode'],
                 "title": title,
