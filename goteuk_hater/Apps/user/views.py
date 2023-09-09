@@ -38,15 +38,20 @@ class UserLoginAPI(APIView):
         
         key = generate_key()
         encrypted_data = encrypt_data(password_, key)
+        
         try:
             user = User.objects.get(id=id_)
             user.hash_key = key
             user.save()
-            return Response(data=encrypted_data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             data={"id": id_, "hash_key": key}
             User.objects.create(**data)
-            return Response(data=encrypted_data, status=status.HTTP_200_OK)
+        res_data = {
+            "id": id_,
+            "password": encrypted_data,
+            "conf_data": conf.body
+        }
+        return Response(data=res_data, status=status.HTTP_200_OK)
             
 
 
