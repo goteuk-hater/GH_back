@@ -169,7 +169,7 @@ class UserReserveStatusAPI(APIView):
             table = soup.find_all("tbody")
             tr_elements = table[0].select("tr")
             if tr_elements[0].select_one("td:nth-child(1)").text.strip() == "검색된 결과가 없습니다.":
-                return Response("예약 내역이 없습니다.", status=status.HTTP_404_NOT_FOUND)
+                return Response(data=[], status=status.HTTP_404_NOT_FOUND)
             result = []
             for data in tr_elements:
                 date = data.select_one("td:nth-child(2)").text.strip()
