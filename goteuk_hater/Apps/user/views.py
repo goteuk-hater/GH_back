@@ -250,8 +250,10 @@ class MonthResevationTableAPI(APIView):
                     # s, e = data_id.find("("), data_id.find(")")
                     # data_id = data_id[s+2:e-1]
                     time = tr.select_one("td:nth-child(4)").text.strip()
-                    available_seats = tr.select_one("td:nth-child(6)").text.strip()
-                    total_seats = tr.select_one("td:nth-child(7)").text.strip()
+                    # available_seats = tr.select_one("td:nth-child(6)").text.strip()
+                    # total_seats = tr.select_one("td:nth-child(7)").text.strip()
+                    available_seats = tr.select_one("td:nth-child(6)").text.strip().split()[0]
+                    total_seats = tr.select_one("td:nth-child(7)").text.strip().split()[0]
                     data_in_each_time = {
                         "id": data_id,
                         "time": time,
@@ -287,8 +289,10 @@ class MonthResevationTableAPI(APIView):
                     # s, e = data_id.find("("), data_id.find(")")
                     # data_id = data_id[s+2:e-1]
                     time = tr.select_one("td:nth-child(4)").text.strip()
-                    available_seats = tr.select_one("td:nth-child(6)").text.strip()
-                    total_seats = tr.select_one("td:nth-child(7)").text.strip()
+                    # available_seats = tr.select_one("td:nth-child(6)").text.strip()
+                    # total_seats = tr.select_one("td:nth-child(7)").text.strip()
+                    available_seats = tr.select_one("td:nth-child(6)").text.strip().split()[0]
+                    total_seats = tr.select_one("td:nth-child(7)").text.strip().split()[0]
                     data_in_each_time = {
                         "id": data_id,
                         "time": time,
