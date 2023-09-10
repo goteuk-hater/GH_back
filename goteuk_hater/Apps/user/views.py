@@ -208,6 +208,7 @@ class MonthResevationTableAPI(APIView):
         payload = {"userId":id_, "password":decrypted_data, "go":""}        
         session = requests.Session()
         response = session.post(LOGIN_API_ROOT, data=payload)
+        # print(response.text)
 
         if response.history:
             now = datetime.now()
@@ -221,12 +222,11 @@ class MonthResevationTableAPI(APIView):
             start2, end2 = int(next_month_start.day), int(now.strftime("%d"))
 
             month_data = {}
-            # flag = False
-            # data_id = 0
+            flag = False
+            data_id = 0
 
 
             while start <= end:
-                print(1)
                 formatted_date = start_date + "-" + str(start).zfill(2)
                 month_data[str(formatted_date)] = []
                 payload = {"shDate": formatted_date}
@@ -240,9 +240,15 @@ class MonthResevationTableAPI(APIView):
                     start += 1
                     continue
                 for tr in tr_elements:
-                    data_id = tr.find("button").get("onclick")
-                    s, e = data_id.find("("), data_id.find(")")
-                    data_id = data_id[s+2:e-1]
+                    if(tr.find("button")):
+                        data_id = tr.find("button").get("onclick")
+                        s, e = data_id.find("("), data_id.find(")")
+                        data_id = data_id[s+2:e-1]
+                    else:
+                        data_id = ""
+                    # data_id = tr.find("button").get("onclick")
+                    # s, e = data_id.find("("), data_id.find(")")
+                    # data_id = data_id[s+2:e-1]
                     time = tr.select_one("td:nth-child(4)").text.strip()
                     available_seats = tr.select_one("td:nth-child(6)").text.strip()
                     total_seats = tr.select_one("td:nth-child(7)").text.strip()
@@ -271,9 +277,15 @@ class MonthResevationTableAPI(APIView):
                     continue
 
                 for tr in tr_elements:
-                    data_id = tr.find("button").get("onclick")
-                    s, e = data_id.find("("), data_id.find(")")
-                    data_id = data_id[s+2:e-1]
+                    if(tr.find("button")):
+                        data_id = tr.find("button").get("onclick")
+                        s, e = data_id.find("("), data_id.find(")")
+                        data_id = data_id[s+2:e-1]
+                    else:
+                        data_id = ""
+                    # data_id = tr.find("button").get("onclick")
+                    # s, e = data_id.find("("), data_id.find(")")
+                    # data_id = data_id[s+2:e-1]
                     time = tr.select_one("td:nth-child(4)").text.strip()
                     available_seats = tr.select_one("td:nth-child(6)").text.strip()
                     total_seats = tr.select_one("td:nth-child(7)").text.strip()
