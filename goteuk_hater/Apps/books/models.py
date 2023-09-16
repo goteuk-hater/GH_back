@@ -6,8 +6,8 @@ class BookCategory(models.Model):
     category = models.CharField(max_length=16)
 
 class Book(models.Model):
-    id = models.IntegerField(primary_key=True)
-    title = models.CharField(max_length=128)
+    id = models.IntegerField()
+    title = models.CharField(primary_key=True, max_length=128)
     author = models.CharField(max_length=128)
     publisher = models.CharField(max_length=128)
     image_url = models.CharField(max_length=256, null=True)
