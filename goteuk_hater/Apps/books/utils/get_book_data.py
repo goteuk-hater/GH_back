@@ -34,7 +34,7 @@ def create_books():
             url = find_url(ISBN[0])
 
             book_data = {
-                "id": data['bkCode'],
+                "book_code": data['bkCode'],
                 "title": title,
                 "author": author,
                 "publisher": publisher,
