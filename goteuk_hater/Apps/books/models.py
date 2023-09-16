@@ -6,10 +6,10 @@ class BookCategory(models.Model):
     category = models.CharField(max_length=16)
 
 class Book(models.Model):
-    id = models.IntegerField()
+    book_code = models.IntegerField()
     title = models.CharField(primary_key=True, max_length=128)
     author = models.CharField(max_length=128)
     publisher = models.CharField(max_length=128)
     image_url = models.CharField(max_length=256, null=True)
     category = models.ForeignKey("BookCategory", related_name="BookCategory",
-                                 on_delete=models.CASCADE, db_column='category')
+                                 on_delete=models.CASCADE, db_column='id')
