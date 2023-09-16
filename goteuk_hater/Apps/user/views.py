@@ -17,6 +17,9 @@ from Apps.user.utils.encryption import *
 from ..user.models import User
 from ..books.models import Book, BookCategory
 
+import asyncio
+import aiohttp
+
 LOGIN_API_ROOT = "http://classic.sejong.ac.kr/userLogin.do"
 MONTHLY_CHECK_TABLE_API_ROOT = "http://classic.sejong.ac.kr/schedulePageList.do?menuInfoId=MAIN_02_04"
 USER_RESERVATION_STATUS_API_ROOT = "https://classic.sejong.ac.kr/viewUserAppInfo.do?menuInfoId=MAIN_02_04"
@@ -94,6 +97,8 @@ class ReservationAPI(APIView):
         try:
             user = User.objects.get(id=id_)
             decrypted_data = decrypt_data(password_, user.hash_key)
+            if decrypted_data is False:
+                return Response("false: Wrong Password", status=status.HTTP_401_UNAUTHORIZED)
         except User.DoesNotExist:
             return Response(data="false: No User Found", status=status.HTTP_404_NOT_FOUND)
         
@@ -131,6 +136,8 @@ class ReservationCancleAPI(APIView):
         try:
             user = User.objects.get(id=id_)
             decrypted_data = decrypt_data(password_, user.hash_key)
+            if decrypted_data is False:
+                return Response("false: Wrong Password", status=status.HTTP_401_UNAUTHORIZED)
         except User.DoesNotExist:
             return Response(data="false: No User Found", status=status.HTTP_404_NOT_FOUND)
         
@@ -155,6 +162,8 @@ class UserReserveStatusAPI(APIView):
         try:
             user = User.objects.get(id=id_)
             decrypted_data = decrypt_data(password_, user.hash_key)
+            if decrypted_data is False:
+                return Response("false: Wrong Password", status=status.HTTP_401_UNAUTHORIZED)
         except User.DoesNotExist:
             return Response(data="false: No User Found", status=status.HTTP_404_NOT_FOUND)
         
@@ -194,7 +203,6 @@ class UserReserveStatusAPI(APIView):
             return Response(data=result, status=status.HTTP_200_OK)
             
         return Response("로그인 실패", status=status.HTTP_401_UNAUTHORIZED)
-
 class MonthResevationTableAPI(APIView):
     # 월별 빈자리 현황
     def post(self, request, fromat=None):
@@ -203,42 +211,39 @@ class MonthResevationTableAPI(APIView):
         try:
             user = User.objects.get(id=id_)
             decrypted_data = decrypt_data(password_, user.hash_key)
+            if decrypted_data is False:
+                return Response("false: Wrong Password", status=status.HTTP_401_UNAUTHORIZED)
         except User.DoesNotExist:
             return Response(data="false: No User Found", status=status.HTTP_404_NOT_FOUND)
-        payload = {"userId":id_, "password":decrypted_data, "go":""}        
-        session = requests.Session()
-        response = session.post(LOGIN_API_ROOT, data=payload)
-        # print(response.text)
+        month_data = {}
+        async def login_user():
+            async with aiohttp.ClientSession() as session:
+                now = datetime.now()
+                next_month_start = now.replace(day=1, month=now.month + 1)
+                next_month = next_month_start.strftime("%Y-%m")
+                start_date = now.strftime("%Y-%m")
+                payload = {"userId":id_, "password":decrypted_data, "go":""}
 
-        if response.history:
-            now = datetime.now()
+                async with session.post(LOGIN_API_ROOT, data=payload) as response:
+                    if response.history:
+                        tasks = [fetch_data(session, start_date, start) for start in range(int(now.strftime("%d")) + 1, 32)]
+                        tasks2 = [fetch_data(session, next_month, start) for start in range(1, int(now.strftime("%d")) + 1)]
+                        await asyncio.gather(*tasks)
+                        await asyncio.gather(*tasks2)
+                        return Response(month_data, status=status.HTTP_200_OK)
+                    else:
+                        return Response("로그인 실패", status=status.HTTP_401_UNAUTHORIZED)
 
-            # 다음 달의 시작 날짜를 계산합니다.
-            next_month_start = now.replace(day=1, month=now.month + 1)
-            next_month = next_month_start.strftime("%Y-%m")
-            
-            start_date = now.strftime("%Y-%m")
-            start, end = int(now.strftime("%d")) + 1, 31
-            start2, end2 = int(next_month_start.day), int(now.strftime("%d"))
-
-            month_data = {}
-            flag = False
-            data_id = 0
-
-
-            while start <= end:
-                formatted_date = start_date + "-" + str(start).zfill(2)
-                month_data[str(formatted_date)] = []
-                payload = {"shDate": formatted_date}
-                response = session.post(MONTHLY_CHECK_TABLE_API_ROOT, data=payload)
-
-                soup = BeautifulSoup(response.text, "html.parser")
+        async def fetch_data(session, start_date, start):
+            formatted_date = start_date + "-" + str(start).zfill(2)
+            payload = {"shDate": formatted_date}
+            month_data[str(formatted_date)] = []
+            async with session.post(MONTHLY_CHECK_TABLE_API_ROOT , data=payload) as response:
+                soup = BeautifulSoup(await response.text(), "html.parser")
                 table = soup.find_all("tbody")
-
                 tr_elements = table[0].select("tr")
                 if tr_elements[0].select_one("td:nth-child(1)").text.strip() == "검색된 결과가 없습니다.":
-                    start += 1
-                    continue
+                    return
                 for tr in tr_elements:
                     if(tr.find("button")):
                         data_id = tr.find("button").get("onclick")
@@ -246,12 +251,7 @@ class MonthResevationTableAPI(APIView):
                         data_id = data_id[s+2:e-1]
                     else:
                         data_id = ""
-                    # data_id = tr.find("button").get("onclick")
-                    # s, e = data_id.find("("), data_id.find(")")
-                    # data_id = data_id[s+2:e-1]
                     time = tr.select_one("td:nth-child(4)").text.strip()
-                    # available_seats = tr.select_one("td:nth-child(6)").text.strip()
-                    # total_seats = tr.select_one("td:nth-child(7)").text.strip()
                     available_seats = tr.select_one("td:nth-child(6)").text.strip().split()[0]
                     total_seats = tr.select_one("td:nth-child(7)").text.strip().split()[0]
                     data_in_each_time = {
@@ -261,49 +261,8 @@ class MonthResevationTableAPI(APIView):
                         "total_seats": total_seats,
                     }
                     month_data[str(formatted_date)].append(data_in_each_time)
-                start += 1
-            flag = False
-            while start2 <= end2:
-                formatted_date = next_month + "-" + str(start2).zfill(2)
-                month_data[str(formatted_date)] = []
 
-                payload = {"shDate": formatted_date}
-                response = session.post(MONTHLY_CHECK_TABLE_API_ROOT, data=payload)
-
-                soup = BeautifulSoup(response.text, "html.parser")
-                
-                table = soup.find_all("tbody")
-                tr_elements = table[0].select("tr")
-                if tr_elements[0].select_one("td:nth-child(1)").text.strip() == "검색된 결과가 없습니다.":
-                    start2 += 1
-                    continue
-
-                for tr in tr_elements:
-                    if(tr.find("button")):
-                        data_id = tr.find("button").get("onclick")
-                        s, e = data_id.find("("), data_id.find(")")
-                        data_id = data_id[s+2:e-1]
-                    else:
-                        data_id = ""
-                    # data_id = tr.find("button").get("onclick")
-                    # s, e = data_id.find("("), data_id.find(")")
-                    # data_id = data_id[s+2:e-1]
-                    time = tr.select_one("td:nth-child(4)").text.strip()
-                    # available_seats = tr.select_one("td:nth-child(6)").text.strip()
-                    # total_seats = tr.select_one("td:nth-child(7)").text.strip()
-                    available_seats = tr.select_one("td:nth-child(6)").text.strip().split()[0]
-                    total_seats = tr.select_one("td:nth-child(7)").text.strip().split()[0]
-                    data_in_each_time = {
-                        "id": data_id,
-                        "time": time,
-                        "available_seats": available_seats,
-                        "total_seats": total_seats
-                    }
-                    month_data[str(formatted_date)].append(data_in_each_time)
-                start2 += 1
-
-            return Response(month_data, status=status.HTTP_200_OK)
-        return Response("로그인 실패", status=status.HTTP_401_UNAUTHORIZED)
+        return asyncio.run(login_user())
 
 class UserListCreateAPI(APIView):
     # 완료

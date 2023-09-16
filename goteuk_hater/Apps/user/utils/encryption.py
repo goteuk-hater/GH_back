@@ -1,4 +1,4 @@
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 # 암호화 키 생성
 def generate_key():
@@ -13,5 +13,8 @@ def encrypt_data(data, key):
 # 데이터 복호화
 def decrypt_data(encrypted_data, key):
     cipher_suite = Fernet(key)
-    decrypted_data = cipher_suite.decrypt(encrypted_data).decode()
-    return decrypted_data
+    try:
+        decrypted_data = cipher_suite.decrypt(encrypted_data).decode()
+        return decrypted_data
+    except InvalidToken as e:
+        return False
