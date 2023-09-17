@@ -114,7 +114,7 @@ class ReservationAPI(APIView):
             book_name = request.data.get("book_name", None)
             classification = request.data.get("classification", None)
             opTermId = 'TERM-00568'
-            bkCode = Book.objects.get(title=book_name).id
+            bkCode = Book.objects.get(title=book_name).book_code
             bkAreaCode = BookCategory.objects.get(category=classification).id
 
             data = {'shInfoId': shInfold, 
