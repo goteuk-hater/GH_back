@@ -244,7 +244,7 @@ class MonthResevationTableAPI(APIView):
         
         data_for_date = []
         for tr in tr_elements:
-            data_id = tr.find("button").get("onclick")[tr.find("button").get("onclick").find("(")+2:-2] if tr.find("button") else ""
+            data_id = tr.find("button").get("onclick")[tr.find("button").get("onclick").find("(")+2:-3] if tr.find("button") else ""
             time = tr.select_one("td:nth-child(4)").text.strip()
             available_seats = tr.select_one("td:nth-child(6)").text.strip().split()[0]
             total_seats = tr.select_one("td:nth-child(7)").text.strip().split()[0]
