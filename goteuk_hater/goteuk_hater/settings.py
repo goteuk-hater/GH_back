@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'Apps.app1.apps.App1Config',
     'Apps.user.apps.UserConfig',
     'Apps.books.apps.BooksConfig',
+    'Apps.inquiry.apps.InquiryConfig',
     # 'Apps.login.apps.LoginConfig',
 ]
 
