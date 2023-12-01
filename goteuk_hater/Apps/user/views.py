@@ -212,7 +212,10 @@ class MonthResevationTableAPI(APIView):
 
     async def login_user(self, session, id_, decrypted_data):
         now = datetime.now()
-        next_month_start = now.replace(day=1, month=now.month + 1)
+        try:
+            next_month_start = now.replace(day=1, month=now.month + 1)
+        except:
+            next_month_start = now.replace(day=1, month=1, year=now.year + 1)
         if next_month_start.month > 12:
             next_month_start = next_month_start.replace(year=next_month_start.year + 1, month=1)
         next_month = next_month_start.strftime("%Y-%m")
